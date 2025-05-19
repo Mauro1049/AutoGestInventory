@@ -1,0 +1,698 @@
+package com.example.autogestinventory.views.ModulosViews
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.example.autogestinventory.Client.SupabaseClient.supabase
+import com.example.autogestinventory.components.DropdownMenuCategoria
+import com.example.autogestinventory.components.DropdownMenuMarca
+import com.example.autogestinventory.model.Categoria
+import com.example.autogestinventory.model.Marca
+import com.example.autogestinventory.model.Producto
+import com.example.autogestinventory.supabase.crudCategorias
+import com.example.autogestinventory.supabase.crudEmpresa
+import com.example.autogestinventory.supabase.crudMarca
+import com.example.autogestinventory.supabase.crudProductos
+import io.github.jan.supabase.auth.auth
+import kotlinx.coroutines.launch
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProductosView(navController: NavController){
+
+    var productos by remember { mutableStateOf<List<Producto>>(emptyList()) }
+    val userId = supabase.auth.currentUserOrNull()?.id
+    var idEmpresa by remember { mutableStateOf<Int?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+    var nuevaDescripcion by remember { mutableStateOf("") }
+
+    var productoAEditar by remember { mutableStateOf<Producto?>(null) }
+    var descripcionEditada by remember { mutableStateOf("") }
+
+    var idMarcaSeleccionada by remember { mutableStateOf<Int?>(null) }
+    var marcas by remember { mutableStateOf<List<Marca>>(emptyList()) }
+
+    var stock by remember { mutableStateOf("") }
+    var stockMinimo by remember { mutableStateOf("") }
+    var codigoBarras by remember { mutableStateOf("") }
+    var codigoInterno by remember { mutableStateOf("") }
+    var precioVenta by remember { mutableStateOf("") }
+    var precioCompra by remember { mutableStateOf("") }
+
+    var idCategoriaSeleccionada by remember { mutableStateOf<Int?>(null) }
+    var categorias by remember { mutableStateOf<List<Categoria>>(emptyList()) }
+
+    var isNuevoProductoVisible by remember { mutableStateOf(false) }
+
+    suspend fun cargarProductos(idEmpresa: Int) {
+        val resultado = crudProductos().getProductosPorEmpresa(idEmpresa)
+        if (resultado.isSuccess) {
+            productos = resultado.getOrDefault(emptyList())
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        userId?.let { user ->
+            val empresa = crudEmpresa().getEmpresaDelUsuarioActual(user)
+            empresa.onSuccess { empresa ->
+                idEmpresa = empresa.id
+                empresa.id?.let {
+                    idEmpresa?.let { empresaId ->
+                        crudProductos().getProductosPorEmpresa(empresaId).onSuccess { listaProductos ->
+                            productos = listaProductos
+                        }
+                        crudMarca().getMarcasPorEmpresa(empresaId).onSuccess { listaMarcas ->
+                            marcas = listaMarcas
+                        }
+                        crudCategorias().getCategoriasPorEmpresa(empresaId).onSuccess { listaCategorias ->
+                            categorias = listaCategorias
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text("Productos", fontWeight = FontWeight.Bold, color = Color.White)
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { isNuevoProductoVisible = !isNuevoProductoVisible }) {
+                Icon(Icons.Filled.Add, "Añadir nuevo producto")
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+
+            AnimatedVisibility(
+                visible = isNuevoProductoVisible,
+                enter = slideInVertically(initialOffsetY = { -it }),
+                exit = slideOutVertically(targetOffsetY = { -it })
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            "Nuevo Producto",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        OutlinedTextField(
+                            value = nuevaDescripcion,
+                            onValueChange = { nuevaDescripcion = it },
+                            label = { Text("Descripción") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        OutlinedTextField(
+                            value = stock,
+                            onValueChange = { stock = it },
+                            label = { Text("Stock") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        OutlinedTextField(
+                            value = stockMinimo,
+                            onValueChange = { stockMinimo = it },
+                            label = { Text("Stock Mínimo") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        OutlinedTextField(
+                            value = codigoBarras,
+                            onValueChange = { codigoBarras = it },
+                            label = { Text("Código de Barras") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        OutlinedTextField(
+                            value = codigoInterno,
+                            onValueChange = { codigoInterno = it },
+                            label = { Text("Código Interno") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        OutlinedTextField(
+                            value = precioVenta,
+                            onValueChange = { precioVenta = it },
+                            label = { Text("Precio de Venta") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        OutlinedTextField(
+                            value = precioCompra,
+                            onValueChange = { precioCompra = it },
+                            label = { Text("Precio de Compra") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        DropdownMenuMarca(marcas, idMarcaSeleccionada) { idMarcaSeleccionada = it }
+                        DropdownMenuCategoria(categorias, idCategoriaSeleccionada) { idCategoriaSeleccionada = it }
+
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    idEmpresa?.let { empresaId ->
+                                        val producto = Producto(
+                                            id = 0,
+                                            descripcion = nuevaDescripcion,
+                                            id_marca = idMarcaSeleccionada ?: return@launch,
+                                            stock = stock.toDoubleOrNull() ?: 0.0,
+                                            stock_minimo = stockMinimo.toDoubleOrNull() ?: 0.0,
+                                            codigobarras = codigoBarras,
+                                            codigointerno = codigoInterno,
+                                            precioventa = precioVenta.toDoubleOrNull() ?: 0.0,
+                                            preciocompra = precioCompra.toDoubleOrNull() ?: 0.0,
+                                            id_categoria = idCategoriaSeleccionada ?: return@launch,
+                                            id_empresa = empresaId
+                                        )
+                                        val resultado = crudProductos().insertarProducto(producto)
+                                        if (resultado.isSuccess) {
+                                            nuevaDescripcion = ""
+                                            stock = ""
+                                            stockMinimo = ""
+                                            codigoBarras = ""
+                                            codigoInterno = ""
+                                            precioVenta = ""
+                                            precioCompra = ""
+                                            idMarcaSeleccionada = null
+                                            idCategoriaSeleccionada = null
+                                            cargarProductos(empresaId)
+                                        } else {
+                                            println("Error al insertar Producto: ${resultado.exceptionOrNull()?.message}")
+                                        }
+                                    }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Guardar Producto")
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Lista de Productos", style = MaterialTheme.typography.titleLarge)
+                        Icon(Icons.Filled.List, contentDescription = "Lista de productos", tint = MaterialTheme.colorScheme.primary)
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LazyColumn {
+                        items(productos) { producto ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            ) {
+                                Column(
+                                    Modifier
+                                        .padding(16.dp)
+                                        .fillMaxWidth()
+                                ) {
+                                    Text(text = producto.descripcion, fontWeight = FontWeight.Medium)
+                                    Text(text = "Stock: ${producto.stock}", color = MaterialTheme.colorScheme.secondary)
+                                    Text(text = "Precio Venta: ${producto.precioventa}", color = MaterialTheme.colorScheme.secondary)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                                        Button(
+                                            onClick = {
+                                                productoAEditar = producto
+                                                descripcionEditada = producto.descripcion
+                                            },
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Icon(Icons.Filled.Edit, contentDescription = "Editar", tint = Color.White)
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Editar", color = Color.White)
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Button(
+                                            onClick = {
+                                                producto.id.let { idProducto ->
+                                                    coroutineScope.launch {
+                                                        val result = crudProductos().elimarProducto(idProducto)
+                                                        if (result.isSuccess) {
+                                                            idEmpresa?.let { cargarProductos(it) }
+                                                            println("Eliminado")
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = Color.White)
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Eliminar", color = Color.White)
+                                        }
+                                    }
+                                }
+                            }
+                            Button(
+                                onClick = {
+                                    navController.navigate("configuracion")
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        "Configuración",
+                                        color = Color.White,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    productoAEditar?.let {
+        AlertDialog(
+            onDismissRequest = {
+                productoAEditar = null
+                descripcionEditada = ""
+            },
+            title = { Text("Editar Producto") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = descripcionEditada,
+                        onValueChange = { descripcionEditada = it },
+                        label = { Text("Descripción") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            productoAEditar?.id.let {
+                                val result = it?.let { it1 -> crudProductos().editarProducto(it1, descripcionEditada) }
+                                idEmpresa.let {
+                                    if (it != null) {
+                                        cargarProductos(it)
+                                    }
+                                }
+                                productoAEditar = null
+                                descripcionEditada = ""
+                            }
+                        }
+                    },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Guardar")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        productoAEditar = null
+                        descripcionEditada = ""
+                    },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    /*
+    var productos by remember { mutableStateOf<List<Producto>>(emptyList()) }
+    val userId = supabase.auth.currentUserOrNull()?.id
+    var idEmpresa by remember { mutableStateOf<Int?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+    var nuevaDescripcion by remember { mutableStateOf("") }
+
+    var productoAEditar by remember { mutableStateOf<Producto?>(null) }
+    var descripcionEditada by remember { mutableStateOf("") }
+
+    var idMarcaSeleccionada by remember { mutableStateOf<Int?>(null) }
+    var marcas by remember { mutableStateOf<List<Marca>>(emptyList()) }
+
+    var stock by remember { mutableStateOf("") }
+    var stockMinimo by remember { mutableStateOf("") }
+    var codigoBarras by remember { mutableStateOf("") }
+    var codigoInterno by remember { mutableStateOf("") }
+    var precioVenta by remember { mutableStateOf("") }
+    var precioCompra by remember { mutableStateOf("") }
+
+    var idCategoriaSeleccionada by remember { mutableStateOf<Int?>(null) }
+    var categorias by remember { mutableStateOf<List<Categoria>>(emptyList()) }
+
+
+    suspend fun cargarProductos(idEmpresa: Int) {
+        val resultado = crudProductos().getProductosPorEmpresa(idEmpresa)
+        if (resultado.isSuccess) {
+            productos = resultado.getOrDefault(emptyList())
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        userId?.let { user ->
+            val empresa = crudEmpresa().getEmpresaDelUsuarioActual(userId)
+            empresa.onSuccess { empresa ->
+                idEmpresa = empresa.id
+                empresa.id?.let {
+                    idEmpresa?.let { it1 ->
+                        crudProductos().getProductosPorEmpresa(it1).onSuccess { listaProductos ->
+                            productos = listaProductos
+                        }
+                        crudMarca().getMarcasPorEmpresa(it1).onSuccess { listaMarcas ->
+                            marcas = listaMarcas
+                        }
+                        crudCategorias().getCategoriasPorEmpresa(it1).onSuccess { listaCategorias ->
+                            categorias = listaCategorias
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Column(modifier = Modifier.padding(16.dp).fillMaxSize()){
+        Column {
+            Text("Productos View")
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = nuevaDescripcion,
+                onValueChange = { nuevaDescripcion = it },
+                label = { Text("Descripcion") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = stock,
+                onValueChange = { stock = it },
+                label = { Text("Stock") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = stockMinimo,
+                onValueChange = { stockMinimo = it },
+                label = { Text("Stock Minimo") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = codigoBarras,
+                onValueChange = { codigoBarras = it },
+                label = { Text("Codigo Barras") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = codigoInterno,
+                onValueChange = { codigoInterno = it },
+                label = { Text("Codigo Interno") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = precioVenta,
+                onValueChange = { precioVenta = it },
+                label = { Text("Precio Venta") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = precioCompra,
+                onValueChange = { precioCompra = it },
+                label = { Text("Precio Compra") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            DropdownMenuMarca(marcas, idMarcaSeleccionada) { idMarcaSeleccionada = it }
+
+            DropdownMenuCategoria(categorias, idCategoriaSeleccionada) { idCategoriaSeleccionada = it }
+
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        idEmpresa?.let { empresaId ->
+                            val producto = Producto(
+                                id = 0,
+                                descripcion = nuevaDescripcion,
+                                id_marca = idMarcaSeleccionada ?: return@launch,
+                                stock = stock.toDoubleOrNull() ?: 0.0,
+                                stock_minimo = stockMinimo.toDoubleOrNull() ?: 0.0,
+                                codigobarras = codigoBarras,
+                                codigointerno = codigoInterno,
+                                precioventa = precioVenta.toDoubleOrNull() ?: 0.0,
+                                preciocompra = precioCompra.toDoubleOrNull() ?: 0.0,
+                                id_categoria = idCategoriaSeleccionada ?: return@launch,
+                                id_empresa = empresaId
+                            )
+                            val resultado = crudProductos().insertarProducto(producto)
+                            if (resultado.isSuccess) {
+                                nuevaDescripcion = ""
+                                stock = ""
+                                stockMinimo = ""
+                                codigoBarras = ""
+                                codigoInterno = ""
+                                precioVenta = ""
+                                precioCompra = ""
+                                idMarcaSeleccionada = null
+                                idCategoriaSeleccionada = null
+                                val recargar = crudProductos().getProductosPorEmpresa(empresaId)
+                                if (recargar.isSuccess) {
+                                    productos = recargar.getOrDefault(emptyList())
+                                }
+                            } else {
+                                println("Error al insertar Producto: ${resultado.exceptionOrNull()?.message}")
+                            }
+                        }
+                    }
+                }
+            ) {
+                Text("Insertar Producto")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Column(Modifier.fillMaxSize().padding(16.dp)) {
+            Text("Lista de Productos", style = MaterialTheme.typography.headlineSmall)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            LazyColumn {
+                items(productos) { producto ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(text = "ID: ${producto.id}")
+                            Text(text = "Descripción: ${producto.descripcion}")
+                            Text(text = "Empresa: ${producto.id_empresa}")
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row (horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(
+                                    onClick = {
+                                        productoAEditar = producto
+                                        descripcionEditada = producto.descripcion
+                                    }
+                                ) {
+                                    Text("Editar")
+                                }
+
+                                Button(
+                                    onClick = {
+                                        producto.id.let { idProducto ->
+                                            coroutineScope.launch {
+                                                val result = crudProductos().elimarProducto(idProducto)
+                                                if (result.isSuccess){
+                                                    idEmpresa?.let { cargarProductos(it) }
+                                                    println("Eliminado")
+                                                }
+                                            }
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+
+                                ) {
+                                    Text("Eliminar")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Button(
+                onClick = {
+                    navController.navigate("configuracion")
+                }
+            ) {
+                Text("cofiguracion")
+            }
+        }
+        productoAEditar?.let {
+            AlertDialog(
+                onDismissRequest = {
+                    productoAEditar = null
+                    descripcionEditada = ""
+                },
+                title = { Text("Editar Producto") },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = descripcionEditada,
+                            onValueChange = { descripcionEditada = it },
+                            label = { Text("Descripcion") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            coroutineScope.launch {
+                                productoAEditar?.id.let {
+                                    val result = it?.let { it1 -> crudProductos().editarProducto(it1, descripcionEditada) }
+                                    idEmpresa.let {
+                                        if (it != null) {
+                                            cargarProductos(it)
+                                        }
+                                    }
+                                    productoAEditar = null
+                                    descripcionEditada = ""
+                                }
+                            }
+                        }
+                    ) {
+                        Text("Guardar")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = {
+                            productoAEditar = null
+                            descripcionEditada = ""
+                        }
+                    ) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
+    }
+
+     */
+}
