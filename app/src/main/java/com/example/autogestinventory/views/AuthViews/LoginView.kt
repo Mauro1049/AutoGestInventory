@@ -10,24 +10,23 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.autogestinventory.AuthRepository.LoginUser
+import com.example.autogestinventory.Client.SupabaseClient.supabase
 import com.example.autogestinventory.components.CustomOutlinedTextField
 import com.example.autogestinventory.components.MessageCard
+import com.example.autogestinventory.supabase.crudModulos
+import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,6 +39,9 @@ fun LoginScreen(navController: NavController) {
     var password by remember { mutableStateOf("") }
     var message by remember { mutableStateOf<String?>(null) }
     var isLoggingIn by remember { mutableStateOf(false) }
+
+    var allowedModules by remember { mutableStateOf<List<String>>(emptyList()) }
+
 
     Box(
         modifier = Modifier

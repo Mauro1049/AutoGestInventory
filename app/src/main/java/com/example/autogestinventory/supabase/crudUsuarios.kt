@@ -2,6 +2,7 @@ package com.example.autogestinventory.supabase
 
 import io.github.jan.supabase.postgrest.from
 import com.example.autogestinventory.Client.SupabaseClient.supabase
+import com.example.autogestinventory.model.Modulos
 import com.example.autogestinventory.model.Usuario
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
@@ -39,7 +40,8 @@ class crudUsuarios {
         direccion: String,
         tipodoc: String,
         tipouser: String,
-        idEmpresa: Int
+        idEmpresa: Int,
+        modulosSeleccionados: List<Modulos>
     ): Result<String> {
         return try {
             val user = supabase.auth.signUpWith(Email) {
@@ -90,9 +92,19 @@ class crudUsuarios {
                 return Result.failure(Exception("No se pudo obtener el ID del usuario insertado"))
             }
 
-            Result.success("Registro y asignación exitosa.")
+            val asignacionModulos = modulosSeleccionados.map { modulos ->
+                mapOf(
+                    "id_usuario" to idUsuario,
+                    "id_modulo" to modulos.id
+                )
+            }
 
-            Result.success("Registro y asignación de empresa exitosos")
+            if (asignacionModulos.isNotEmpty()) {
+                supabase.from("permisos").insert(asignacionModulos)
+            }
+
+            return Result.success("Usuario, empresa y módulos asignados correctamente.")
+
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -111,6 +123,21 @@ class crudUsuarios {
                 }.decodeSingle<Usuario>()
             Result.success(response)
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun elimarUsuario(idUsuario: Int): Result<Boolean>{
+        return try {
+            val response = supabase.from("usuarios")
+                .delete{
+                    filter {
+                        eq("id", idUsuario)
+                    }
+                }
+            Result.success(true)
+        } catch (e: Exception){
+            println("Error al borrar usuario")
             Result.failure(e)
         }
     }

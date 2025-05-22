@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,10 +49,27 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.example.autogestinventory.components.ConfiguracionItem
+import com.example.autogestinventory.supabase.crudModulos
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfiguracionView(navController: NavController) {
+
+    val  allowedModules = remember { mutableStateOf<List<String>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        val idAuth = supabase.auth.currentUserOrNull()?.id
+        if (idAuth != null) {
+            try {
+                val modulos = crudModulos().obtenerModulosAsignados(idAuth)
+                allowedModules.value = modulos.map { it.trim() }.filter { it.isNotBlank() }
+                println("Módulos limpios: $allowedModules")
+            } catch (e: Exception) {
+                println("Error al obtener módulos: ${e.message}")
+            }
+        }
+    }
+
 
     val user = remember {
         mutableStateOf(supabase.auth.currentUserOrNull()?.email ?: "Usuario")
@@ -150,21 +168,27 @@ fun ConfiguracionView(navController: NavController) {
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    ConfiguracionItem(
-                        text = "Productos",
-                        icon = Icons.Filled.Person,
-                        onClick = { navController.navigate("productos") }
-                    )
-                    ConfiguracionItem(
-                        text = "Categoría",
-                        icon = Icons.Filled.AddCircle, // Ícono más corto
-                        onClick = { navController.navigate("categorias") }
-                    )
-                    ConfiguracionItem(
-                        text = "Marca",
-                        icon = Icons.Filled.Build, // Ícono más corto
-                        onClick = { navController.navigate("marca") }
-                    )
+                    if("Productos" in allowedModules.value){
+                        ConfiguracionItem(
+                            text = "Productos",
+                            icon = Icons.Filled.Person,
+                            onClick = { navController.navigate("productos") }
+                        )
+                    }
+                    if("Categoria de productos" in allowedModules.value){
+                        ConfiguracionItem(
+                            text = "Categoría",
+                            icon = Icons.Filled.AddCircle, // Ícono más corto
+                            onClick = { navController.navigate("categorias") }
+                        )
+                    }
+                    if ("Marca de productos" in allowedModules.value) {
+                        ConfiguracionItem(
+                            text = "Marca",
+                            icon = Icons.Filled.Build,
+                            onClick = { navController.navigate("marca") }
+                        )
+                    }
                 }
             }
 
@@ -190,16 +214,35 @@ fun ConfiguracionView(navController: NavController) {
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    ConfiguracionItem(
-                        text = "Personal",
-                        icon = Icons.Filled.Person,
-                        onClick = { navController.navigate("personal") }
-                    )
-                    ConfiguracionItem(
-                        text = "Empresa", // Título más corto
-                        icon = Icons.Filled.LocationOn,
-                        onClick = { navController.navigate("tuempresa") }
-                    )
+
+                    if ("Personal" in allowedModules.value) {
+                        ConfiguracionItem(
+                            text = "Personal",
+                            icon = Icons.Filled.Person,
+                            onClick = { navController.navigate("personal") }
+                        )
+                    }
+                    if ("Tu empresa" in allowedModules.value) {
+                        ConfiguracionItem(
+                            text = "Empresa",
+                            icon = Icons.Filled.LocationOn,
+                            onClick = { navController.navigate("tuempresa") }
+                        )
+                    }
+                    if ("Salidas Varias" in allowedModules.value) {
+                        ConfiguracionItem(
+                            text = "Salidas Varias",
+                            icon = Icons.Filled.LocationOn,
+                            onClick = { }
+                        )
+                    }
+                    if ("Kardex" in allowedModules.value) {
+                        ConfiguracionItem(
+                            text = "Kardex",
+                            icon = Icons.Filled.LocationOn,
+                            onClick = { }
+                        )
+                    }
                 }
             }
         }
