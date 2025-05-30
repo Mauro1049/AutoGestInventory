@@ -19,15 +19,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -60,6 +66,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.example.autogestinventory.AuthRepository.LoginUser
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,6 +99,8 @@ fun ProductosView(navController: NavController){
     var categorias by remember { mutableStateOf<List<Categoria>>(emptyList()) }
 
     var isNuevoProductoVisible by remember { mutableStateOf(false) }
+
+    var expanded by remember { mutableStateOf(false) }
 
     suspend fun cargarProductos(idEmpresa: Int) {
         val resultado = crudProductos().getProductosPorEmpresa(idEmpresa)
@@ -123,11 +135,60 @@ fun ProductosView(navController: NavController){
         topBar = {
             TopAppBar(
                 title = {
-                    Text("Productos", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(
+                        "Ajustes",
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary
-                )
+                ),
+                actions = {
+                    IconButton(onClick = { expanded = !expanded }) {
+                        Icon(Icons.Filled.MoreVert, contentDescription = "Opciones", tint = Color.White)
+                    }
+                    DropdownMenu(expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Filled.ExitToApp, contentDescription = "Cerrar Sesión", tint = MaterialTheme.colorScheme.error)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Cerrar Sesión", color = MaterialTheme.colorScheme.onSurface)
+                                }
+                            },
+                            onClick = {
+                                expanded = false
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    try {
+                                        LoginUser().signOut()
+                                        withContext(Dispatchers.Main) {
+                                            navController.navigate("login") {
+                                                popUpTo("modulos") { inclusive = true }
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        println("Error al cerrar sesión: ${e.message}")
+                                    }
+                                }
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Filled.Home, contentDescription = "Configuracion", tint = MaterialTheme.colorScheme.error)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Configuracion.", color = MaterialTheme.colorScheme.onSurface)
+                                }
+                            },
+                            onClick = {
+                                navController.navigate("configuracion")
+                            }
+                        )
+                    }
+                }
             )
         },
         floatingActionButton = {
@@ -294,9 +355,16 @@ fun ProductosView(navController: NavController){
                                         .fillMaxWidth()
                                 ) {
                                     Text(text = producto.descripcion, fontWeight = FontWeight.Medium)
+                                    Spacer(modifier = Modifier.padding(2.dp))
                                     Text(text = "Stock: ${producto.stock}", color = MaterialTheme.colorScheme.secondary)
+                                    Spacer(modifier = Modifier.padding(2.dp))
+                                    Text(text = "Stock: ${producto.stock_minimo}", color = MaterialTheme.colorScheme.secondary)
+                                    Spacer(modifier = Modifier.padding(2.dp))
                                     Text(text = "Precio Venta: ${producto.precioventa}", color = MaterialTheme.colorScheme.secondary)
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.padding(2.dp))
+                                    Text(text = "Precio Compra: ${producto.preciocompra}", color = MaterialTheme.colorScheme.secondary)
+                                    Spacer(modifier = Modifier.padding(2.dp))
+
                                     Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                                         Button(
                                             onClick = {
@@ -330,28 +398,6 @@ fun ProductosView(navController: NavController){
                                             Text("Eliminar", color = Color.White)
                                         }
                                     }
-                                }
-                            }
-                            Button(
-                                onClick = {
-                                    navController.navigate("configuracion")
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Text(
-                                        "Configuración",
-                                        color = Color.White,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
                                 }
                             }
                         }

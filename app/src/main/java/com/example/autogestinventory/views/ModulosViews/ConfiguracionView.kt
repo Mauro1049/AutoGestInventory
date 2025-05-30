@@ -9,11 +9,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
@@ -63,16 +69,10 @@ fun ConfiguracionView(navController: NavController) {
             try {
                 val modulos = crudModulos().obtenerModulosAsignados(idAuth)
                 allowedModules.value = modulos.map { it.trim() }.filter { it.isNotBlank() }
-                println("Módulos limpios: $allowedModules")
             } catch (e: Exception) {
                 println("Error al obtener módulos: ${e.message}")
             }
         }
-    }
-
-
-    val user = remember {
-        mutableStateOf(supabase.auth.currentUserOrNull()?.email ?: "Usuario")
     }
 
     var expanded by remember { mutableStateOf(false) }
@@ -124,7 +124,7 @@ fun ConfiguracionView(navController: NavController) {
                         DropdownMenuItem(
                             text = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Filled.ExitToApp, contentDescription = "Usuario Config.", tint = MaterialTheme.colorScheme.error)
+                                    Icon(Icons.Filled.Face, contentDescription = "Usuario Config.", tint = MaterialTheme.colorScheme.error)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text("Usuario Config.", color = MaterialTheme.colorScheme.onSurface)
                                 }
@@ -138,110 +138,145 @@ fun ConfiguracionView(navController: NavController) {
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxWidth()
+                .padding(8.dp)
         ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
+            item {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        "Gestion del Inventario",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        "Administra las diferentes secciones de tu inventario.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    if("Productos" in allowedModules.value){
-                        ConfiguracionItem(
-                            text = "Productos",
-                            icon = Icons.Filled.Person,
-                            onClick = { navController.navigate("productos") }
-                        )
-                    }
-                    if("Categoria de productos" in allowedModules.value){
-                        ConfiguracionItem(
-                            text = "Categoría",
-                            icon = Icons.Filled.AddCircle, // Ícono más corto
-                            onClick = { navController.navigate("categorias") }
-                        )
-                    }
-                    if ("Marca de productos" in allowedModules.value) {
-                        ConfiguracionItem(
-                            text = "Marca",
-                            icon = Icons.Filled.Build,
-                            onClick = { navController.navigate("marca") }
-                        )
-                    }
-                }
-            }
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                "Gestion del Inventario",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                "Administra las diferentes secciones de tu inventario.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        "Administración",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        "Gestiona el personal y la información de tu empresa.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+                            if("Productos" in allowedModules.value){
+                                ConfiguracionItem(
+                                    text = "Productos",
+                                    icon = Icons.Filled.Check,
+                                    onClick = { navController.navigate("productos") }
+                                )
+                            }
+                            if("Categoria de productos" in allowedModules.value){
+                                ConfiguracionItem(
+                                    text = "Categoría",
+                                    icon = Icons.Filled.AddCircle,
+                                    onClick = { navController.navigate("categorias") }
+                                )
+                            }
+                            if ("Marca de productos" in allowedModules.value) {
+                                ConfiguracionItem(
+                                    text = "Marca",
+                                    icon = Icons.Filled.Build,
+                                    onClick = { navController.navigate("marca") }
+                                )
+                            }
+                            if ("Salidas Varias" in allowedModules.value) {
+                                ConfiguracionItem(
+                                    text = "Salidas Varias",
+                                    icon = Icons.Filled.Info,
+                                    onClick = { }
+                                )
+                            }
+                            if ("Kardex" in allowedModules.value) {
+                                ConfiguracionItem(
+                                    text = "Kardex",
+                                    icon = Icons.Filled.Add,
+                                    onClick = { }
+                                )
+                            }
+                        }
+                    }
 
-                    if ("Personal" in allowedModules.value) {
-                        ConfiguracionItem(
-                            text = "Personal",
-                            icon = Icons.Filled.Person,
-                            onClick = { navController.navigate("personal") }
-                        )
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                "Gestion De Usuarios",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                "Gestiona el personal de tu empresa.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            if ("Personal" in allowedModules.value) {
+                                ConfiguracionItem(
+                                    text = "Personal",
+                                    icon = Icons.Filled.Face,
+                                    onClick = { navController.navigate("personal") }
+                                )
+                            }
+                        }
                     }
-                    if ("Tu empresa" in allowedModules.value) {
-                        ConfiguracionItem(
-                            text = "Empresa",
-                            icon = Icons.Filled.LocationOn,
-                            onClick = { navController.navigate("tuempresa") }
-                        )
-                    }
-                    if ("Salidas Varias" in allowedModules.value) {
-                        ConfiguracionItem(
-                            text = "Salidas Varias",
-                            icon = Icons.Filled.LocationOn,
-                            onClick = { }
-                        )
-                    }
-                    if ("Kardex" in allowedModules.value) {
-                        ConfiguracionItem(
-                            text = "Kardex",
-                            icon = Icons.Filled.LocationOn,
-                            onClick = { }
-                        )
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                "Administración",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                "Gestiona el personal y la información de tu empresa.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            if ("Tu empresa" in allowedModules.value) {
+                                ConfiguracionItem(
+                                    text = "Empresa",
+                                    icon = Icons.Filled.Home,
+                                    onClick = { navController.navigate("tuempresa") }
+                                )
+                            }
+                        }
                     }
                 }
             }

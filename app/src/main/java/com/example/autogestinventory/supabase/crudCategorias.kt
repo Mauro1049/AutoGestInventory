@@ -57,7 +57,7 @@ class crudCategorias {
                 }
             Result.success(true)
         } catch (e: Exception){
-            println("Error al borrar categoria")
+            println("Error al borrar categoria $e")
             Result.failure(e)
         }
     }

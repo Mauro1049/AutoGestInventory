@@ -78,122 +78,24 @@ fun TuEmpresaView(navController: NavController){
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tu Empresa: ${empresa?.nombre ?: empresa?.id ?: "Cargando..."}") },
+                title = { Text("Tu Empresa: ${empresa?.nombre ?: "Cargando..."}") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = Color.White
                 )
             )
-        }
-    ) { innerPadding ->
-        Box (
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                empresa?.let {
-                    Text(
-                        text = it.nombre,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Bienvenido a AutoGest Inventory",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = Color.Gray
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    empresa?.let {
-                        Card(
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                            shape = MaterialTheme.shapes.small
-                        ) {
-                            CardInfo(label = "Moneda", value = it.simbolomoneda, modifier = Modifier.padding(16.dp))
-                        }
-                    }
-                    Card(
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        shape = MaterialTheme.shapes.small
-                    ) {
-                        CardInfo(label = "Usuarios", value = usuarios.toString(), modifier = Modifier.padding(16.dp))
-                    }
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-                Button(
-                    onClick = {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            try {
-                                LoginUser().signOut()
-                                withContext(Dispatchers.Main) {
-                                    navController.navigate("login") {
-                                        popUpTo("modulos") { inclusive = true }
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                println("Error al cerrar sesión: ${e.message}")
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Text("Cerrar sesión", color = Color.White)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = {
-                        navController.navigate("configuracion")
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Text("Configuración", color = Color.White)
-                }
-            }
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        empresa?.nombre ?: "Tu Empresa",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(24.dp),
-            contentAlignment = Alignment.TopCenter
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 empresa?.let {
                     Text(
                         text = it.nombre,
@@ -205,43 +107,19 @@ fun TuEmpresaView(navController: NavController){
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "Panel de Control",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.Gray
-                )
+                Text("Panel de Control", style = MaterialTheme.typography.titleMedium, color = Color.Gray)
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     empresa?.let {
-                        Card(
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            InfoCard(
-                                label = "Moneda",
-                                value = it.simbolomoneda,
-                                icon = Icons.Filled.AccountCircle
-                            )
-                        }
+                        InfoCard(label = "Moneda", value = it.simbolomoneda, icon = Icons.Filled.AccountCircle)
                     }
-                    Card(
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        InfoCard(
-                            label = "Usuarios",
-                            value = usuarios.toString(),
-                            icon = Icons.Filled.AccountCircle
-                        )
-                    }
+                    InfoCard(label = "Usuarios", value = usuarios.toString(), icon = Icons.Filled.AccountCircle)
                 }
+            }
 
-                Spacer(modifier = Modifier.height(32.dp))
-
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Button(
                     onClick = {
                         CoroutineScope(Dispatchers.IO).launch {
@@ -263,42 +141,20 @@ fun TuEmpresaView(navController: NavController){
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            "Cerrar Sesión",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                    Text("Cerrar sesión", color = Color.White)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = {
-                        navController.navigate("configuracion")
-                    },
+                    onClick = { navController.navigate("configuracion") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            "Configuración",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                    Text("Configuración", color = Color.White)
                 }
             }
         }
