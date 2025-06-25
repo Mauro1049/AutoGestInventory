@@ -107,7 +107,7 @@ fun MarcaView(navController: NavController){
             TopAppBar(
                 title = {
                     Text(
-                        "Ajustes",
+                        "Marcas",
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )

@@ -37,11 +37,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.autogestinventory.AuthRepository.LoginUser
-import com.example.autogestinventory.components.CardInfo
 import com.example.autogestinventory.Client.SupabaseClient.supabase
 import com.example.autogestinventory.components.InfoCard
 import com.example.autogestinventory.model.Empresa
+import com.example.autogestinventory.model.Usuario
 import com.example.autogestinventory.supabase.crudEmpresa
+import com.example.autogestinventory.supabase.crudUsuarios
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +55,7 @@ import kotlinx.coroutines.withContext
 fun TuEmpresaView(navController: NavController){
 
     var empresa by remember { mutableStateOf<Empresa?>(null) }
+    var usuario by remember { mutableStateOf<Usuario?>(null) }
     val userId = supabase.auth.currentUserOrNull()?.id
     var usuarios by remember { mutableStateOf(0) }
 
@@ -72,13 +74,17 @@ fun TuEmpresaView(navController: NavController){
                     }
                 }
             }
+
+            crudUsuarios().getUsuarioById(userId).onSuccess { usuarioObtenido ->
+                usuario = usuarioObtenido
+            }
         }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tu Empresa: ${empresa?.nombre ?: "Cargando..."}") },
+                title = { Text("Bienvenido: ${usuario?.nombres ?: "Cargando..."}") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = Color.White
@@ -113,9 +119,10 @@ fun TuEmpresaView(navController: NavController){
 
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     empresa?.let {
-                        InfoCard(label = "Moneda", value = it.simbolomoneda, icon = Icons.Filled.AccountCircle)
+                        InfoCard(label = "Monedas", value = it.simbolomoneda, icon = Icons.Filled.AccountCircle)
+                        InfoCard(label = "Usuarios", value = usuarios.toString(), icon = Icons.Filled.AccountCircle)
                     }
-                    InfoCard(label = "Usuarios", value = usuarios.toString(), icon = Icons.Filled.AccountCircle)
+
                 }
             }
 

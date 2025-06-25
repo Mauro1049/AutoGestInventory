@@ -18,13 +18,15 @@ class RegisterUser {
         tipouser: String
         ): Result<String> {
         return try {
+            // Registro con email y contraseña
             val user = supabase.auth.signUpWith(Email) {
                 this.email = email
                 this.password = password
             }
-
+            // Obtener el ID del usuario autenticado (UUID de Supabase Auth)
             val userIdAuth = supabase.auth.currentUserOrNull()?.id
 
+            // Inserción de datos adicionales en la tabla usuarios
             val insertResult = supabase.from("usuarios").insert(
                 listOf(
                     mapOf(

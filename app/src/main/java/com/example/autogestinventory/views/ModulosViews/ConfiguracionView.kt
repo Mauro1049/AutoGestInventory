@@ -207,7 +207,9 @@ fun ConfiguracionView(navController: NavController) {
                                 ConfiguracionItem(
                                     text = "Kardex",
                                     icon = Icons.Filled.Add,
-                                    onClick = { }
+                                    onClick = {
+                                        navController.navigate("kardex")
+                                    }
                                 )
                             }
                         }

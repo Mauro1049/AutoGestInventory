@@ -136,7 +136,7 @@ fun ProductosView(navController: NavController){
             TopAppBar(
                 title = {
                     Text(
-                        "Ajustes",
+                        "Productos",
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
@@ -358,7 +358,7 @@ fun ProductosView(navController: NavController){
                                     Spacer(modifier = Modifier.padding(2.dp))
                                     Text(text = "Stock: ${producto.stock}", color = MaterialTheme.colorScheme.secondary)
                                     Spacer(modifier = Modifier.padding(2.dp))
-                                    Text(text = "Stock: ${producto.stock_minimo}", color = MaterialTheme.colorScheme.secondary)
+                                    Text(text = "Stock Minimo: ${producto.stock_minimo}", color = MaterialTheme.colorScheme.secondary)
                                     Spacer(modifier = Modifier.padding(2.dp))
                                     Text(text = "Precio Venta: ${producto.precioventa}", color = MaterialTheme.colorScheme.secondary)
                                     Spacer(modifier = Modifier.padding(2.dp))

@@ -113,7 +113,7 @@ fun CategoriasView(navController: NavController){
             TopAppBar(
                 title = {
                     Text(
-                        "Ajustes",
+                        "Cateforias",
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )

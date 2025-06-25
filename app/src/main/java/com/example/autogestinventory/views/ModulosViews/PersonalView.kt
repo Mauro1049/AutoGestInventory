@@ -39,7 +39,6 @@ import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PersonalView(navController: NavController) {
     val userId = supabase.auth.currentUserOrNull()?.id
@@ -71,7 +70,6 @@ fun PersonalView(navController: NavController) {
 
     var isNuevoUsuarioVisible by remember { mutableStateOf(false) }
 
-    // Load empresas y usuarios
     LaunchedEffect(Unit) {
         userId?.let {
             val empresaResult = crudEmpresa().getEmpresaDelUsuarioActual(userId)
@@ -90,7 +88,7 @@ fun PersonalView(navController: NavController) {
         topBar = {
             TopAppBar(
                 title = {
-                    Text("Productos", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Personal", fontWeight = FontWeight.Bold, color = Color.White)
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary
@@ -267,7 +265,7 @@ fun PersonalView(navController: NavController) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Lista de Productos", style = MaterialTheme.typography.titleLarge)
+                            Text("Personal", style = MaterialTheme.typography.titleLarge)
                             Icon(Icons.Filled.List, contentDescription = "Lista de productos", tint = MaterialTheme.colorScheme.primary)
                         }
 
